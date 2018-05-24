@@ -28,6 +28,25 @@ std::ostream& operator<<(std::ostream& os, const Socket& s)
 
 Socket::Socket(const char * address, const char * port):sd(-1)
 {
+	struct addrinfo hints;
+	struct addrinfo *res; // se usa para el bind()
+
+	memset((void*) &hints, '\0', sizeof(struct addrinfo));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM; // DGRAM siempre es UDP
+	hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
+
+	int rc = getaddrinfo(address, port, &hints, &res);
+
+	if (rc != 0) {
+		std::cout << "error getaddrinfo(): " << gai_strerror(rc) << std::endl;
+		return -1;
+	}
+
+	int sd = socket(res->ai_family, res->ai_socktype,
+        res->ai_protocol);
+	sa = res->ai_addr;
+	sa_len = res->ai_addrlen;
 }
 
 // ----------------------------------------------------------------------------
@@ -41,12 +60,14 @@ int Socket::bind()
 
 int Socket::send(Serializable * obj, Socket * sock)
 {
+	return sendto(d, obj->data(), obj->size(), 0, &sock->sa, sock->sa_len);
 }
 
 // ----------------------------------------------------------------------------
 
 int Socket::recv(char * buffer, Socket ** sock)
 {
+	return recvfrom(sd, buffer, sizeof(buffer), 0, &sock->sa, sock->sa_len);
 }
 
 // ----------------------------------------------------------------------------
