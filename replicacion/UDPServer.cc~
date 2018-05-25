@@ -39,7 +39,6 @@ void UDPServer::server_thread()
 	    socket.recv(buffer, *s);
 	    add_connection(s);
 	    do_message();
-	}
 }
 
 // ----------------------------------------------------------------------------
